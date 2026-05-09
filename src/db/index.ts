@@ -7,6 +7,6 @@ if (!process.env.DATABASE_URL) {
 }
 
 const sql = neon(process.env.DATABASE_URL);
-export const index = drizzle(sql);
+export const db = drizzle(sql);
 // pool is not used in neon-http but exported as null for consistency in index.ts
 export const pool = null;
