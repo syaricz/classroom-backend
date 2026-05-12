@@ -6,6 +6,7 @@ import {
     text,
     timestamp,
     index,
+    unique,
 } from "drizzle-orm/pg-core";
 
 const timestamps = {
@@ -44,6 +45,7 @@ export const session = pgTable("session", {
     ...timestamps,
 }, (table) => [
     index("session_user_id_idx").on(table.userId),
+    index("session_expires_at_idx").on(table.expiresAt),
 ]);
 
 export const account = pgTable("account", {
@@ -64,6 +66,10 @@ export const account = pgTable("account", {
     ...timestamps,
 }, (table) => [
     index("account_user_id_idx").on(table.userId),
+    unique("account_provider_id_account_id_unique").on(
+        table.providerId,
+        table.accountId,
+    ),
 ]);
 
 export const verification = pgTable("verification", {
@@ -75,6 +81,7 @@ export const verification = pgTable("verification", {
     ...timestamps,
 }, (table) => [
     index("verification_identifier_idx").on(table.identifier),
+    index("verification_expires_at_idx").on(table.expiresAt),
 ]);
 
 export const userRelations = relations(user, ({ many }) => ({

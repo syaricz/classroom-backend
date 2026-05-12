@@ -14,7 +14,8 @@ CREATE TABLE "classes" (
 	"schedules" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "classes_invite_code_unique" UNIQUE("invite_code")
+	CONSTRAINT "classes_invite_code_unique" UNIQUE("invite_code"),
+	CONSTRAINT "classes_capacity_positive_ck" CHECK ("capacity" > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "enrollments" (
@@ -39,7 +40,8 @@ CREATE TABLE "account" (
 	"scope" text,
 	"password" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "account_provider_id_account_id_unique" UNIQUE("provider_id","account_id")
 );
 --> statement-breakpoint
 CREATE TABLE "session" (
@@ -88,4 +90,6 @@ CREATE INDEX "enrollments_student_id_idx" ON "enrollments" USING btree ("student
 CREATE INDEX "enrollments_class_id_idx" ON "enrollments" USING btree ("class_id");--> statement-breakpoint
 CREATE INDEX "account_user_id_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_user_id_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
+CREATE INDEX "session_expires_at_idx" ON "session" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
+CREATE INDEX "verification_expires_at_idx" ON "verification" USING btree ("expires_at");

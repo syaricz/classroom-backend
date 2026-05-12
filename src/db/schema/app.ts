@@ -9,7 +9,9 @@ import {
     index,
     unique,
     jsonb,
+    check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { user } from "./auth";
 
 const timestamps = {
@@ -72,6 +74,7 @@ export const classes = pgTable(
     (table) => [
         index("classes_subject_id_idx").on(table.subjectId),
         index("classes_teacher_id_idx").on(table.teacherId),
+        check("classes_capacity_positive_ck", sql`${table.capacity} > 0`),
     ],
 );
 
