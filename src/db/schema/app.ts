@@ -12,7 +12,7 @@ import {
     check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { user } from "./auth";
+import { user } from "./auth.js";
 
 const timestamps = {
     createdAt: timestamp("created_at").defaultNow().notNull(),
