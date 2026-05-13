@@ -16,6 +16,8 @@
   "type": "module",
   "description": "",
   "dependencies": {
+    "@arcjet/inspect": "^1.4.0",
+    "@arcjet/node": "^1.4.0",
     "@neondatabase/serverless": "^0.10.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
