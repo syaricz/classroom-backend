@@ -88,7 +88,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-// Get department details with subjects, classes, and enrolled students
+// Get department details with counts
 router.get("/:id", async (req, res) => {
     try {
         const departmentId = Number(req.params.id);
@@ -98,9 +98,7 @@ router.get("/:id", async (req, res) => {
         }
 
         const [department] = await db
-            .select({
-                ...getTableColumns(departments),
-            })
+            .select()
             .from(departments)
             .where(eq(departments.id, departmentId));
 
@@ -108,61 +106,38 @@ router.get("/:id", async (req, res) => {
             return res.status(404).json({ error: "Department not found" });
         }
 
-        const [subjectsList, classesList, enrolledStudents] = await Promise.all([
-            db
-                .select({
-                    ...getTableColumns(subjects),
-                    totalClasses: sql<number>`count(${classes.id})`,
-                })
-                .from(subjects)
-                .leftJoin(classes, eq(subjects.id, classes.subjectId))
-                .where(eq(subjects.departmentId, departmentId))
-                .groupBy(subjects.id)
-                .orderBy(desc(subjects.createdAt)),
-            db
-                .select({
-                    ...getTableColumns(classes),
-                    subject: {
-                        ...getTableColumns(subjects),
-                    },
-                    teacher: {
-                        ...getTableColumns(user),
-                    },
-                })
-                .from(classes)
-                .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-                .leftJoin(user, eq(classes.teacherId, user.id))
-                .where(eq(subjects.departmentId, departmentId))
-                .orderBy(desc(classes.createdAt)),
-            db
-                .select({
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    image: user.image,
-                    role: user.role,
-                })
-                .from(user)
-                .leftJoin(enrollments, eq(user.id, enrollments.studentId))
-                .leftJoin(classes, eq(enrollments.classId, classes.id))
-                .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-                .where(
-                    and(eq(user.role, "student"), eq(subjects.departmentId, departmentId))
-                )
-                .groupBy(user.id, user.name, user.email, user.image, user.role)
-                .orderBy(desc(user.createdAt)),
-        ]);
+        const [subjectsCount, classesCount, enrolledStudentsCount] =
+            await Promise.all([
+                db
+                    .select({ count: sql<number>`count(*)` })
+                    .from(subjects)
+                    .where(eq(subjects.departmentId, departmentId)),
+                db
+                    .select({ count: sql<number>`count(${classes.id})` })
+                    .from(classes)
+                    .leftJoin(subjects, eq(classes.subjectId, subjects.id))
+                    .where(eq(subjects.departmentId, departmentId)),
+                db
+                    .select({ count: sql<number>`count(distinct ${user.id})` })
+                    .from(user)
+                    .leftJoin(enrollments, eq(user.id, enrollments.studentId))
+                    .leftJoin(classes, eq(enrollments.classId, classes.id))
+                    .leftJoin(subjects, eq(classes.subjectId, subjects.id))
+                    .where(
+                        and(
+                            eq(user.role, "student"),
+                            eq(subjects.departmentId, departmentId)
+                        )
+                    ),
+            ]);
 
         res.status(200).json({
             data: {
                 department,
-                subjects: subjectsList,
-                classes: classesList,
-                enrolledStudents,
                 totals: {
-                    subjects: subjectsList.length,
-                    classes: classesList.length,
-                    enrolledStudents: enrolledStudents.length,
+                    subjects: subjectsCount[0]?.count ?? 0,
+                    classes: classesCount[0]?.count ?? 0,
+                    enrolledStudents: enrolledStudentsCount[0]?.count ?? 0,
                 },
             },
         });
